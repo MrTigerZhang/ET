@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using MongoDB.Driver;
 
 namespace ETModel
 {
 	[ObjectSystem]
-	public class DBQueryJsonTaskAwakeSystem : AwakeSystem<DBQueryJsonTask, string, string, TaskCompletionSource<List<Component>>>
+	public class DBQueryJsonTaskAwakeSystem : AwakeSystem<DBQueryJsonTask, string, string, ETTaskCompletionSource<List<ComponentWithId>>>
 	{
-		public override void Awake(DBQueryJsonTask self, string collectionName, string json, TaskCompletionSource<List<Component>> tcs)
+		public override void Awake(DBQueryJsonTask self, string collectionName, string json, ETTaskCompletionSource<List<ComponentWithId>> tcs)
 		{
 			self.CollectionName = collectionName;
 			self.Json = json;
@@ -22,17 +21,18 @@ namespace ETModel
 
 		public string Json { get; set; }
 
-		public TaskCompletionSource<List<Component>> Tcs { get; set; }
+		public ETTaskCompletionSource<List<ComponentWithId>> Tcs { get; set; }
 		
-		public override async Task Run()
+		public override async ETTask Run()
 		{
 			DBComponent dbComponent = Game.Scene.GetComponent<DBComponent>();
 			try
 			{
 				// 执行查询数据库任务
-				FilterDefinition<Component> filterDefinition = new JsonFilterDefinition<Component>(this.Json);
-				List<Component> disposers = await dbComponent.GetCollection(this.CollectionName).FindAsync(filterDefinition).Result.ToListAsync();
-				this.Tcs.SetResult(disposers);
+				FilterDefinition<ComponentWithId> filterDefinition = new JsonFilterDefinition<ComponentWithId>(this.Json);
+				IAsyncCursor<ComponentWithId> cursor = await dbComponent.GetCollection(this.CollectionName).FindAsync(filterDefinition);
+				List<ComponentWithId> components = await cursor.ToListAsync();
+				this.Tcs.SetResult(components);
 			}
 			catch (Exception e)
 			{

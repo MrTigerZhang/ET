@@ -30,6 +30,14 @@ namespace ILRuntime.CLR.TypeSystem
             }
         }
 
+        public bool IsGenericParameter
+        {
+            get
+            {
+                return true;
+            }
+        }
+
         public Type TypeForCLR
         {
             get { return typeof(ILGenericParameterType); }
@@ -126,6 +134,14 @@ namespace ILRuntime.CLR.TypeSystem
         {
             get { return false; }
         }
+        public bool IsEnum
+        {
+            get { return false; }
+        }
+        public bool IsInterface
+        {
+            get { return false; }
+        }
 
         public string Name
         {
@@ -167,6 +183,22 @@ namespace ILRuntime.CLR.TypeSystem
         public bool IsArray
         {
             get { return false; }
+        }
+
+        public bool IsByRef
+        {
+            get
+            {
+                return false;
+            }
+        }
+
+        public IType ElementType
+        {
+            get
+            {
+                return null;
+            }
         }
 
         public int ArrayRank

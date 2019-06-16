@@ -7,23 +7,18 @@ namespace ETHotfix
 	[MessageHandler(AppType.DB)]
 	public class DBQueryJsonRequestHandler : AMRpcHandler<DBQueryJsonRequest, DBQueryJsonResponse>
 	{
-		protected override async void Run(Session session, DBQueryJsonRequest message, Action<DBQueryJsonResponse> reply)
+		protected override void Run(Session session, DBQueryJsonRequest message, Action<DBQueryJsonResponse> reply)
+		{
+			RunAsync(session, message, reply).Coroutine();
+		}
+		
+		protected async ETVoid RunAsync(Session session, DBQueryJsonRequest message, Action<DBQueryJsonResponse> reply)
 		{
 			DBQueryJsonResponse response = new DBQueryJsonResponse();
 			try
 			{
-				DBCacheComponent dbCacheComponent = Game.Scene.GetComponent<DBCacheComponent>();
-				List<Component> disposers = await dbCacheComponent.GetJson(message.CollectionName, message.Json);
-
-				response.Disposers = disposers;
-
-				if (message.NeedCache)
-				{
-					foreach (Component disposer in disposers)
-					{
-						dbCacheComponent.AddToCache(disposer, message.CollectionName);
-					}
-				}
+				List<ComponentWithId> components = await Game.Scene.GetComponent<DBComponent>().GetJson(message.CollectionName, message.Json);
+				response.Components = components;
 
 				reply(response);
 			}

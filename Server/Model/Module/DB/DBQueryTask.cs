@@ -1,13 +1,12 @@
 ﻿using System;
-using System.Threading.Tasks;
 using MongoDB.Driver;
 
 namespace ETModel
 {
 	[ObjectSystem]
-	public class DBQueryTaskSystem : AwakeSystem<DBQueryTask, string, TaskCompletionSource<Component>>
+	public class DBQueryTaskSystem : AwakeSystem<DBQueryTask, string, ETTaskCompletionSource<ComponentWithId>>
 	{
-		public override void Awake(DBQueryTask self, string collectionName, TaskCompletionSource<Component> tcs)
+		public override void Awake(DBQueryTask self, string collectionName, ETTaskCompletionSource<ComponentWithId> tcs)
 		{
 			self.CollectionName = collectionName;
 			self.Tcs = tcs;
@@ -18,28 +17,17 @@ namespace ETModel
 	{
 		public string CollectionName { get; set; }
 
-		public TaskCompletionSource<Component> Tcs { get; set; }
+		public ETTaskCompletionSource<ComponentWithId> Tcs { get; set; }
 
-		public override async Task Run()
+		public override async ETTask Run()
 		{
-			DBCacheComponent dbCacheComponent = Game.Scene.GetComponent<DBCacheComponent>();
 			DBComponent dbComponent = Game.Scene.GetComponent<DBComponent>();
-			// 执行查询前先看看cache中是否已经存在
-			Component disposer = dbCacheComponent.GetFromCache(this.CollectionName, this.Id);
-			if (disposer != null)
-			{
-				this.Tcs.SetResult(disposer);
-				return;
-			}
 			try
 			{
 				// 执行查询数据库任务
-				disposer = await dbComponent.GetCollection(this.CollectionName).FindAsync((s) => s.Id == this.Id).Result.FirstOrDefaultAsync();
-				if (disposer != null)
-				{
-					dbCacheComponent.AddToCache(disposer);
-				}
-				this.Tcs.SetResult(disposer);
+				IAsyncCursor<ComponentWithId> cursor = await dbComponent.GetCollection(this.CollectionName).FindAsync((s) => s.Id == this.Id);
+				ComponentWithId component = await cursor.FirstOrDefaultAsync();
+				this.Tcs.SetResult(component);
 			}
 			catch (Exception e)
 			{

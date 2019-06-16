@@ -3,11 +3,11 @@ using ETModel;
 using UnityEditor;
 using UnityEngine;
 
-namespace MyEditor
+namespace ETEditor
 {
     public class GlobalProtoEditor: EditorWindow
     {
-        const string path = @".\Assets\Res\Config\GlobalProto.txt";
+        const string path = @"./Assets/Res/Config/GlobalProto.txt";
 
         private GlobalProto globalProto;
 

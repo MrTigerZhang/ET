@@ -188,6 +188,15 @@ namespace ILRuntime.Runtime.Enviorment
             }
         }
 
+
+        public bool IsEnum
+        {
+            get
+            {
+                return type.IsEnum;
+            }
+        }
+
         public bool IsDelegate
         {
             get
@@ -235,9 +244,37 @@ namespace ILRuntime.Runtime.Enviorment
                 return type.HasGenericParameter;
             }
         }
+
+        public bool IsGenericParameter
+        {
+            get
+            {
+                return type.IsGenericParameter;
+            }
+        }
         public bool IsArray
         {
             get { return false; }
+        }
+        public bool IsByRef
+        {
+            get
+            {
+                return type.IsByRef;
+            }
+        }
+
+        public bool IsInterface
+        {
+            get { return type.IsInterface; }
+        }
+
+        public IType ElementType
+        {
+            get
+            {
+                return type.ElementType;
+            }
         }
 
         public int ArrayRank

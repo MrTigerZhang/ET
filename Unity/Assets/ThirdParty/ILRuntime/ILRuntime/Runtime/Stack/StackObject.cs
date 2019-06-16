@@ -16,6 +16,16 @@ namespace ILRuntime.Runtime.Stack
         public int Value;
         public int ValueLow;
 
+        public static bool operator ==(StackObject a, StackObject b)
+        {
+            return (a.ObjectType == b.ObjectType) && (a.Value == b.Value) && (a.ValueLow == b.ValueLow);
+        }
+
+        public static bool operator !=(StackObject a, StackObject b)
+        {
+            return (a.ObjectType != b.ObjectType) || (a.Value != b.Value) || (a.ValueLow == b.ValueLow);
+        }
+
         //IL2CPP can't process esp->ToObject() properly, so I can only use static function for this
         public static unsafe object ToObject(StackObject* esp, ILRuntime.Runtime.Enviorment.AppDomain appdomain, IList<object> mStack)
         {
@@ -79,11 +89,11 @@ namespace ILRuntime.Runtime.Stack
                     }
                 case ObjectTypes.StackObjectReference:
                     {
-                        return ToObject((*(StackObject**)&esp->Value), appdomain, mStack);
+                        return ToObject((ILIntepreter.ResolveReference(esp)), appdomain, mStack);
                     }
                 case ObjectTypes.ValueTypeObjectReference:
                     {
-                        StackObject* dst = *(StackObject**)&esp->Value;
+                        StackObject* dst = ILIntepreter.ResolveReference(esp);
                         IType type = appdomain.GetType(dst->Value);
                         if (type is ILType)
                         {
@@ -147,11 +157,27 @@ namespace ILRuntime.Runtime.Stack
                     esp.Value = idx;
                     if (fieldType is CLRType)
                     {
-                        mStack[idx] = ((CLRType)fieldType).CreateDefaultInstance();
+                        if (fieldType.TypeForCLR.IsEnum)
+                        {
+                            esp.ObjectType = ObjectTypes.Integer;
+                            esp.Value = 0;
+                            esp.ValueLow = 0;
+                            mStack[idx] = null;
+                        }
+                        else
+                            mStack[idx] = ((CLRType)fieldType).CreateDefaultInstance();
                     }
                     else
                     {
-                        mStack[idx] = ((ILType)fieldType).Instantiate();
+                        if (((ILType)fieldType).IsEnum)
+                        {
+                            esp.ObjectType = ObjectTypes.Integer;
+                            esp.Value = 0;
+                            esp.ValueLow = 0;
+                            mStack[idx] = null;
+                        }
+                        else
+                            mStack[idx] = ((ILType)fieldType).Instantiate();
                     }
                 }
                 else
@@ -163,7 +189,7 @@ namespace ILRuntime.Runtime.Stack
         public unsafe static void Initialized(StackObject* esp, IType type)
         {
             var t = type.TypeForCLR;
-            if (type.IsPrimitive)
+            if (type.IsPrimitive || type.IsEnum)
             {
                 if (t == typeof(int) || t == typeof(uint) || t == typeof(short) || t == typeof(ushort) || t == typeof(byte) || t == typeof(sbyte) || t == typeof(char) || t == typeof(bool))
                 {
